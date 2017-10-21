@@ -6,18 +6,20 @@ include 'Database.php';
 class Model
 {
 	private $con;
-	protected $table;
-	protected $obj;
+	private $table;
+	private $fillable;
+	private $obj;
 
 	/**
 	 * Model constructor.
 	 * @param $table
 	 * @param $obj
 	 */
-	function __construct($table, $obj)
+	function __construct($table, $fillable, $obj)
 	{
 		$db = new Database();
 		$this->table = $table;
+		$this->fillable = $fillable;
 		$this->obj = $obj;
 		$this->con = $db->db_con();
 	}
@@ -61,6 +63,15 @@ class Model
 		$this->con->close();
 		return $arrResult;
 	}
+
+	/**
+	 * @param array $record
+	 */
+	function insert($record)
+	{
+
+	}
+
 
 	function update($obj)
 	{

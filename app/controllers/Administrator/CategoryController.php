@@ -4,6 +4,7 @@ namespace App\Controllers\Administrator;
 include __CTR__ . 'Controller.php';
 
 use App\Controllers\Controller;
+use App\Requests\Request;
 
 class CategoryController extends Controller
 {
@@ -17,8 +18,9 @@ class CategoryController extends Controller
 		return $this->view('admin.category.insert');
 	}
 
-	public function insert()
+	public function insert(Request $request)
 	{
+		var_dump($request);
 
 	}
 }

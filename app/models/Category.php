@@ -8,14 +8,14 @@ use App\Object\Category as CateClass;
 
 class Category extends Model {
 
-	protected $table = 'categories';
-
+	private $table = 'categories';
+	private $fillable = ['cid', 'serial', 'title', 'slug', 'description', 'status'];
 	/**
 	 * Category constructor.
 	 */
 	function __construct()
 	{
-		parent::__construct($this->table, new CateClass());
+		parent::__construct($this->table, $this->fillable, new CateClass());
 	}
 }
 ?>

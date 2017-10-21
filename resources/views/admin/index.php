@@ -20,6 +20,7 @@
 
 <body class="nav-md">
 <div class="container body">
+    <?php echo $_SERVER['SERVER_NAME'] ?>
     <div class="main_container">
         <?php include('layouts/sidebar.php') ?>
 

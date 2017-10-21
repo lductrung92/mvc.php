@@ -1,18 +1,13 @@
 <?php
 
 namespace Route;
+session_start();
+include __REQ__ . 'Request.php';
+
+use App\Requests\Request;
 
 class Route
 {
-	/**
-	 * @var array $_listUri List of URI's to match against
-	 */
-	private $_listUri = array();
-
-	/**
-	 * @var array $_listCall List of closures to call
-	 */
-	private $_listCall = array();
 
 	/**
 	 * @var string $_trim Class-wide items to clean
@@ -20,70 +15,84 @@ class Route
 	private $_trim = '/\^$';
 
 	/**
-	 * add - Adds a URI and Function to the two lists
+	 * add - Adds a URI and Function to the two lists. Method Get
 	 *
 	 * @param string $uri A path such as about/system
 	 * @param object,string $function or String An anonymous function
 	 */
 	public function get($uri, $function)
 	{
-		$uri = trim($uri, $this->_trim);
-		$this->_listUri[] = $uri;
-		$this->_listCall[] = $function;
+		if($_SERVER['REQUEST_METHOD'] === 'GET')
+		{
+			if(trim($_GET['uri'], $this->_trim) === trim($uri, $this->_trim)) {
+				$this->submit($uri, $function, $_GET);
+			}
+		}
 	}
 
 	/**
-	 * submit - Looks for a match for the URI and runs the related function
+	 * add - Adds a URI and Function to the two lists. Method Post
+	 *
+	 * @param string $uri A path such as about/system
+	 * @param object,string $function or String An anonymous function
 	 */
-	public function submit()
+	public function post($uri, $function)
 	{
-		$uri = isset($_REQUEST['uri']) ? $_REQUEST['uri'] : '/';
-		$uri = trim($uri, $this->_trim);
-
-		$replacementValues = array();
-
-		/**
-		 * List through the stored URI's
-		 */
-		foreach ($this->_listUri as $listKey => $listUri)
-		{
-			/**
-			 * See if there is a match
-			 */
-			if (preg_match("#^$listUri$#", $uri))
+		if($_SERVER['REQUEST_METHOD'] === 'POST'){
+			if(isset($_SESSION['csrf_token']))
 			{
-				/**
-				 * Replace the values
-				 */
-				$realUri = explode('/', $uri);
-				$fakeUri = explode('/', $listUri);
-
-				/**
-				 * Gather the .+ values with the real values in the URI
-				 */
-				foreach ($fakeUri as $key => $value)
-				{
-					if ($value == '.+')
-					{
-						$replacementValues[] = $realUri[$key];
+				if(isset($_POST['_token'])) {
+					if($_SESSION['csrf_token'] == $_POST['_token']) {
+						if(trim($_SERVER['REQUEST_URI'], $this->_trim) === trim($uri, $this->_trim)) {
+							$this->submit($uri, $function, null, $_POST);
+						}
+					} else {
+						header('HTTP/1.1 401 Not authorized');
+						echo 'token not authorized';
 					}
+				} else {
+					header('HTTP/1.1 403 Forbidden');
+					echo 'required token';
 				}
 
-				/**
-				 * Using controller call method
-				 */
-				if(is_string($this->_listCall[$listKey])){
-					$ctr_method = explode('@',$this->_listCall[$listKey]);
-					require_once __PATH__ . $ctr_method[0] . '.php';
-					$method = new $ctr_method[0]();
-					$method->{$ctr_method[1]}();
-				} else {
-					/**
-					 * Pass an array for arguments
-					 */
-					call_user_func_array($this->_listCall[$listKey], $replacementValues);
+			} else {
+				header('HTTP/1.1 503 Service Temporarily Unavailable');
+				header('Status: 503 Service Temporarily Unavailable');
+				header('Retry-After: 300');
+			}
+			csrf_token();
+		}
+
+
+	}
+
+	/**
+	 * @param $uri
+	 * @param $function
+	 * @param null $get
+	 * @param null $post
+	 */
+	private function submit($uri, $function, $get = null, $post = null)
+	{
+		if(is_string($function)){
+			$ctr_method = explode('@',$function);
+			require_once __PATH__ . $ctr_method[0] . '.php';
+			$method = new $ctr_method[0]();
+			$method->{$ctr_method[1]}(new Request($get, $post));
+		} else {
+			/**
+			 * Pass an array for arguments
+			 */
+			$replacementValues = array();
+			$fakeUri = explode('/', $uri);
+			foreach ($fakeUri as $key => $value)
+			{
+				if ($value == '.+')
+				{
+					$replacementValues[] = $fakeUri[$key];
 				}
 			}
+			call_user_func_array($function, $replacementValues);
 		}
 	}
 

@@ -41,7 +41,7 @@
                         </div>
                         <div class="x_content">
                             <br />
-                            <form class="form-horizontal form-label-left" action="" method="post">
+                            <form class="form-horizontal form-label-left" action="administrator/category/insert" method="post">
                                 <input name="_token" type="hidden" value="<?php echo csrf_token() ?>">
                                 <div class="form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="categories">Danh mục
